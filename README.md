@@ -53,8 +53,7 @@ you should see restaurant resized to 350px
 * `q=` 1-100 defaults to _80_ only works on jpeg, does a default 7 pass png optimisation.
 
 
-## Shugar
-
+## Sugar
 
 Base64 URL cache safe paths
 
