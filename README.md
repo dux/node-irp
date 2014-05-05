@@ -17,7 +17,7 @@ I removed all code, converted to CoffeeScript, addeed Base64 Cache safe URLS and
 
 start with
 
-> git clone https://github.com/Trifolium/NodeSizer
+> git clone https://github.com/dux/node-irp
 
 > cd NodeSizer
 
