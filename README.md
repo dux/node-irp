@@ -19,7 +19,7 @@ start with
 
 > git clone https://github.com/dux/node-irp
 
-> cd NodeSizer
+> cd node-irp
 
 for development
 
