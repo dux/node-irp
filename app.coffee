@@ -35,22 +35,23 @@ class CacheImage
 class ResizeRequest
   constructor: (@req, @res, @type) ->
     opts = @req.path.split("/")
+    
     qs = @req.query
-    if opts[3]
+    if opts[2]
       qs.size = opts[2]
-      qs.source = new Buffer(opts[3].split(".")[0], encoding = "Base64").toString("ascii")
+      qs.source = new Buffer(opts.reverse()[0].split(".")[0], encoding = "Base64").toString("ascii")
     else
       qs.source ||= qs.src
     
     # we have all params?
-    unless qs.size && qs.source
-      res.send 400, "<h3>Invalid Request</h3>"
+    unless qs.source
+      res.send 400, "<h3>Source not defined</h3>"
       return
 
     qs.q ||= 80
     @image = new CacheImage(qs.source, qs.size, qs.q, @type)
 
-    if fs.existsSync( @image.resized_file )
+    if @type != 'copy' && fs.existsSync( @image.resized_file )
       return @deliver_resized_image()
     else
       if fs.existsSync( @image.cached_file )
@@ -68,8 +69,16 @@ class ResizeRequest
 
         req.on "end", => @when_we_have_original_image()
 
+  print_image: (local_path) ->
+    @res.set 'Content-Type': "image/#{@image.ext}"
+    @res.set 'Cache-control': "public, max-age=10000000, no-transform"
+    @res.set 'ETag': md5( local_path )
+    @res.set 'Expires', new Date(Date.now() + 10000000).toUTCString()
+    fs.createReadStream( local_path ).pipe( @res )
+
   when_we_have_original_image: ->
     return @deliver_resized_image() if fs.existsSync( @image.resized_file )
+    return @print_image( @image.cached_file ) if @type == 'copy'
 
     mkdirp @image.resized_dir
 
@@ -102,24 +111,20 @@ class ResizeRequest
     time_to_convert = Date.now() - @image.start
 
     console.log "#{time_to_convert} ms for #{@image.url} to #{@image.resized_file}"
-    @res.set 'Content-Type': "image/#{@image.ext}"
-    @res.set 'Cache-control': "public, max-age=10000000, no-transform"
-    @res.set 'ETag': md5(@image.resized_file)
-    @res.set 'IRP-Creation-Time': time_to_convert
-    @res.set 'Expires', new Date(Date.now() + 10000000).toUTCString()
-    fs.createReadStream( @image.resized_file ).pipe( @res )
+    @print_image( @image.resized_file )
 
 
-#Create express app
+# Create express app
 app = express()
 app.set "title", "NodeSizer"
 app.get "/", (req, res) -> res.send "<p>hakeru!!!<p>"
 app.get '/favicon.ico', (req, res) -> res.send('')
 
-#Converter
-app.get "/width*", (req, res) -> new ResizeRequest(req, res, 'resize')
-app.get "/resize*", (req, res) -> new ResizeRequest(req, res, 'resize')
-app.get "/fit*", (req, res) -> new ResizeRequest(req, res, 'fit')
+# Converter
+app.get "/width*",   (req, res) -> new ResizeRequest(req, res, 'resize')
+app.get "/resize*",  (req, res) -> new ResizeRequest(req, res, 'resize')
+app.get "/fit*",     (req, res) -> new ResizeRequest(req, res, 'fit')
+app.get "/copy*",    (req, res) -> new ResizeRequest(req, res, 'copy')
 
 port = if process.env.NODE_PROD is "true" then 80 else 8080
 app.listen port

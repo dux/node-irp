@@ -36,13 +36,26 @@ for poduction
 
 ## Does it work?
 
-`http://localhost:8080/fit?source=http://i.imgur.com/2dD6DL5.jpg&size=350x350`
+http://localhost:8080/fit?source=http://i.imgur.com/2dD6DL5.jpg&size=350x350
 
 you should see restaurant in a box 350px X 350px
 
-`http://localhost:8080/width?source=http://i.imgur.com/2dD6DL5.jpg&size=350`
+http://localhost:8080/width?source=http://i.imgur.com/2dD6DL5.jpg&size=350
 
 you should see restaurant resized to 350px
+
+
+## Sugar
+
+Base64 URL cache safe paths
+
+http://localhost:8080/fit?source=http://i.imgur.com/2dD6DL5.jpg&size=350x350
+
+can be written as
+
+http://localhost:8080/fit/300x300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
+
+>http://localhost:8080/fit/(size)/Base64(source).(jpg)
 
 
 ## Options
@@ -53,16 +66,18 @@ you should see restaurant resized to 350px
 * `q=` 1-100 defaults to _80_ only works on jpeg, does a default 7 pass png optimisation.
 
 
-## Sugar
+## Methods - resize, fit, copy
 
-Base64 URL cache safe paths
+Resize resizes to defined width
+http://localhost:8080/resize/300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
 
-`http://localhost:8080/fit?source=http://i.imgur.com/2dD6DL5.jpg&size=350x350`
+Fit resizes and crops image to specified with and height
+http://localhost:8080/fit/200x300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
+http://localhost:8080/fit/300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
 
-can be written as
-
-`http://localhost:8080/fit/300x300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg`
-`http://localhost:8080/fit/(size)/Base64(source).(jpg)`
+Copy just copyes resource as any plain CDN would
+http://localhost:8080/copy/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
+http://localhost:8080/copy?src=http://i.imgur.com/2dD6DL5.jpg
 
 
 ## In plan
