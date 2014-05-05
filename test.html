@@ -1,0 +1,20 @@
+<doctype html>
+<html>
+  <head>
+    <title>Resize test for 100 images</title>
+  </head>
+  <body onload="alert('Finished in '+(new Date()-window.speed)+' ms')">
+    <img src="http://localhost:8080/width?size=200&src=http://ifail.info/wp-content/uploads/2014/03/nyanwilhite.gif" />
+    <div id="nyancat"></div>
+    <div id="restaurant"></div>
+    <script>
+      window.speed = new Date()
+      el = document.getElementById('restaurant')
+      for (var i=100;i<200;i++)
+      {
+        el.innerHTML += '<img src="http://localhost:8080/fit?source=http://i.imgur.com/2dD6DL5.jpg&size='+i+'" /> '
+      }
+    </script>
+  </body>
+
+</html>
