@@ -116,7 +116,7 @@ class ResizeRequest
 
 # Create express app
 app = express()
-app.set "title", "NodeSizer"
+app.set "title", "NodeIRP"
 app.get "/", (req, res) -> res.send "<p>hakeru!!!<p>"
 app.get '/favicon.ico', (req, res) -> res.send('')
 
