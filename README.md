@@ -82,6 +82,78 @@ Copy just copyes resource as any plain CDN would.
 > http://localhost:8080/copy/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
 > http://localhost:8080/copy?src=http://i.imgur.com/2dD6DL5.jpg
 
+## Production install nginx and forever
+
+Install Forever ( https://www.npmjs.org/package/forever )
+	
+	npm install forever -g
+
+Edit nginx to look like this
+
+APP_NAME for example my_cool_app
+
+APP_PORT for example 3000 or 4000
+
+HOSTNAME for example github.com
+
+
+	nginx http { 
+		server_names_hash_bucket_size 64; 
+	}
+
+	upstream APP_NAME {
+		server 127.0.0.1:APP_PORT;
+  	}
+
+  	server {
+		listen 80;
+		server_name HOSTNAME;
+
+		location / {
+  		proxy_set_header X-Real-IP $remote_addr:APP_PORT;
+  		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  		proxy_set_header Host $http_host;
+  		proxy_set_header X-NginX-Proxy true;
+
+  		proxy_pass http://APP_NAME/;
+  		proxy_redirect off;
+		}
+  	}
+
+Go to your application folder 
+
+	cd /path/to/your/node/app/
+
+And run 
+
+	forever start --spinSleepTime 10000 app.js
+	
+If you like you can create crontab (if you restart server you need to start forever again... )
+
+First create logs folder inside your app 
+
+	mkdir /path/to/your/node/app/logs
+	
+Create starter.sh inside your application folder 
+
+	vi starter.sh
+	
+And paste this code	
+
+	if [ $(ps -e -o uid,cmd | grep $UID | grep node | grep -v grep | wc -l | tr -s "\n") -eq 0 ]
+	then
+    	export PATH=/usr/local/bin:$PATH
+    	forever start --spinSleepTime 10000 --sourceDir /path/to/your/node/app app.js >> /path/to/your/node/app/logs/log.txt 2>&1
+	fi
+	
+Open crontab
+
+	crontab -e
+	
+And add 
+
+	@reboot /path/to/your/node/app/starter.sh		
+That is it!
 
 ## In plan
 
