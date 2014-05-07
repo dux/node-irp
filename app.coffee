@@ -51,6 +51,9 @@ class ResizeRequest
     qs.q ||= 80
     @image = new CacheImage(qs.source, qs.size, qs.q, @type)
 
+    if @req.headers['cache-control'] == 'no-cache' && fs.existsSync( @image.resized_file )
+      fs.unlinkSync( @image.resized_file )
+
     if @type != 'copy' && fs.existsSync( @image.resized_file )
       return @deliver_resized_image()
     else
