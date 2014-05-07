@@ -13,6 +13,13 @@ mkdirp     = require('mkdirp');
 l = (data) -> console.log(data)
 
 class CacheImage
+  @content_type = 
+    jpg: 'image/jpeg'
+    jpeg: 'image/jpeg'
+    gif: 'image/gif'
+    png: 'image/png'
+    js: 'text/javascript'
+
   constructor: (@url, @size, @quality, @type) ->
     path = @url.toLowerCase().split('/')
     path.shift()
@@ -21,9 +28,6 @@ class CacheImage
     @file_name = path.join('/').replace(/[^\w\.]+/g, "_")
 
     @ext = @file_name.split('.').reverse()[0]
-    if ['jpg', 'png', 'gif'].indexOf(@ext) == -1
-      @ext = 'jpg'
-    
     @file_name = "#{md5(@file_name)}.#{@ext}"
 
     @cached_dir   = "cache/ori/#{@domain}"
@@ -31,6 +35,7 @@ class CacheImage
     @resized_dir  = "cache/res/#{@domain}/#{@type}/#{@size}-#{@quality}"
     @resized_file = "#{@resized_dir}/#{@file_name}"
     @start = Date.now()
+
 
 class ResizeRequest
   constructor: (@req, @res, @type) ->
@@ -44,9 +49,8 @@ class ResizeRequest
       qs.source ||= qs.src
     
     # we have all params?
-    unless qs.source
-      res.send 400, "<h3>Source not defined</h3>"
-      return
+    return res.send( 500, "<h3>Source not defined</h3>" ) unless qs.source
+    return res.send( 500, "<h3>BAD URL</h3><p>No http or https prefix on <b>#{qs.source}</b></p>" ) unless /https?:\/\//.test(qs.source)
 
     qs.q ||= 80
     @image = new CacheImage(qs.source, qs.size, qs.q, @type)
@@ -60,20 +64,23 @@ class ResizeRequest
       if fs.existsSync( @image.cached_file )
         return @when_we_have_original_image()
       else
-        mkdirp( @image.cached_dir )
+        try
+          req = request(url: qs.source)
+          req.on "response", (resp) =>
+            if resp.statusCode is 200
+              mkdirp( @image.cached_dir )
+              req.pipe fs.createWriteStream( @image.cached_file )
+            else
+              console.log "Error: Code: " + resp.statusCode
+              console.log "Invalid File"
 
-        req = request(url: qs.source)
-        req.on "response", (resp) =>
-          if resp.statusCode is 200
-            req.pipe fs.createWriteStream( @image.cached_file )
-          else
-            console.log "Error: Code: " + resp.statusCode
-            console.log "Invalid File"
+          req.on "end", => @when_we_have_original_image()
+        catch err
+          @res.send 500, {}, "Error: #{err}, probably bad URL (#{qs.source})"
+          return
 
-        req.on "end", => @when_we_have_original_image()
-
-  print_image: (local_path) ->
-    @res.set 'Content-Type': "image/#{@image.ext}"
+  write_in_browser: (local_path) ->
+    @res.set 'Content-Type': CacheImage.content_type[@image.ext] if CacheImage.content_type[@image.ext]
     @res.set 'Cache-control': "public, max-age=10000000, no-transform"
     @res.set 'ETag': md5( local_path )
     @res.set 'Expires', new Date(Date.now() + 10000000).toUTCString()
@@ -81,7 +88,7 @@ class ResizeRequest
 
   when_we_have_original_image: ->
     return @deliver_resized_image() if fs.existsSync( @image.resized_file )
-    return @print_image( @image.cached_file ) if @type == 'copy'
+    return @write_in_browser( @image.cached_file ) if @type == 'copy'
 
     mkdirp @image.resized_dir
 
@@ -114,7 +121,7 @@ class ResizeRequest
     time_to_convert = Date.now() - @image.start
 
     console.log "#{time_to_convert} ms for #{@image.url} to #{@image.resized_file}"
-    @print_image( @image.resized_file )
+    @write_in_browser( @image.resized_file )
 
 
 # Create express app
