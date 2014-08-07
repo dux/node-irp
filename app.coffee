@@ -2,12 +2,19 @@
 # https://github.com/sdepold/node-imageable
 # https://github.com/chrisjenx/NodeSizer
 
+# generate thumbnail
+# http://localhost:8080/fit?image=http%3A%2F%2Flocalhost%3A4000%2F%3Furl%3Dhttp%3A%2F%2Findex.hr&size=250&gravity=North
+
+# generate web shoot thumbnail
+# http://localhost:8080/fit?page=http://www.trab.io&size=400x300
+
 express    = require("express")
 easy_image = require("easyimage")
 fs         = require("fs")
 md5        = require("md5").digest_s
 request    = require("request")
 mkdirp     = require('mkdirp');
+webshot   = require('webshot');
 
 # helpers
 l = (data) -> console.log(data)
@@ -24,7 +31,8 @@ class CacheImage
     path = @url.toLowerCase().split('/')
     path.shift()
     path.shift()
-    @domain = path.shift()
+    @domain = path.shift().replace(/www\./,'')
+    @domain = "#{@domain[0]}/#{@domain}"
     @file_name = path.join('/').replace(/[^\w\.]+/g, "_")
 
     @ext = @file_name.split('.').reverse()[0]
@@ -46,14 +54,38 @@ class ResizeRequest
       qs.size = opts[2]
       qs.source = new Buffer(opts.reverse()[0].split(".")[0], encoding = "Base64").toString("ascii")
     else
-      qs.source ||= qs.src
-    
+      qs.source ||= qs.src || qs.image
+
+    # for webshot
+    if qs.page
+      qs.is_page = true
+      qs.source = qs.page
+
     # we have all params?
     return res.send( 500, "<h3>Source not defined</h3>" ) unless qs.source
     return res.send( 500, "<h3>BAD URL</h3><p>No http or https prefix on <b>#{qs.source}</b></p>" ) unless /https?:\/\//.test(qs.source)
 
     qs.q ||= 80
-    @image = new CacheImage(qs.source, qs.size, qs.q, @type)
+
+    if qs.is_page
+      @req.query.gravity = 'North'
+      @image ||= new CacheImage(qs.source+'/shot.jpg', qs.size, qs.q, @type)
+      @image.is_page = true
+      return @when_we_have_original_image() if fs.existsSync( @image.cached_file )
+      mkdirp @image.cached_dir
+      # @image.cached_file = 'nutshell.png'
+      # qs.source = 'nutshell.com'
+      webshot qs.source, @image.cached_file, { screenSize: { width: 1024, height: 768 }, userAgent:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36' }, (err) =>
+        unless fs.existsSync( @image.cached_file )
+          exec = require('child_process').exec
+          exec("curl -o '#{@image.cached_file}' 'http://free.pagepeeker.com/v2/thumbs.php?size=l&url=#{qs.source.replace(/https?:\/\//,'').replace(/www\./,'')}'")
+          # return @when_we_have_original_image()
+          return @res.redirect("http://free.pagepeeker.com/v2/thumbs.php?size=l&url=#{qs.source}")
+        
+        return @when_we_have_original_image()
+      return
+
+    @image ||= new CacheImage(qs.source, qs.size, qs.q, @type)
 
     if @req.headers['cache-control'] == 'no-cache' && fs.existsSync( @image.resized_file )
       fs.unlinkSync( @image.resized_file )
@@ -108,8 +140,13 @@ class ResizeRequest
 
     if @type == 'fit'
       opts.height ||= opts.width
+      opts.gravity = @req.query.gravity
       easy_image.rescrop opts, (err, img) =>
-        return @res.send 500, "ERROR: #{err}" if err
+        if err
+          if @image.is_page
+            fs.unlinkSync @image.cached_file if fs.existsSync @image.cached_file
+            fs.unlinkSync @image.resized_file if fs.existsSync @image.resized_file
+          return @res.send 500, "ERROR: #{err}"
         @deliver_resized_image()
     else
       easy_image.resize opts, (err, img) =>
