@@ -8,3 +8,4 @@ Thumbs.db
 
 #My files
 cache/*
+node_modules/webshot/*

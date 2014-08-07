@@ -1,0 +1,12 @@
+{
+  "name": "node-irp",
+  "description": "node image resize proxy",
+  "version": "0.2.0",
+  "author": "Dino Reic (@dux)",
+  "repository" : {"type": "git", "url": "https://github.com/dux/node-irp.git"},
+  "dependencies": {
+    "express": "3.x",
+    "easyimage": "*",
+    "webshot": "*"
+  }
+}

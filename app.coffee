@@ -173,6 +173,7 @@ app.get "/resize*",  (req, res) -> new ResizeRequest(req, res, 'resize')
 app.get "/fit*",     (req, res) -> new ResizeRequest(req, res, 'fit')
 app.get "/copy*",    (req, res) -> new ResizeRequest(req, res, 'copy')
 
-port = if process.env.NODE_PROD is "true" then 80 else 8080
+# port = if process.env.NODE_PROD is "true" then 80 else 8080
+port = 4000
 app.listen port
 console.log "NodeIRP started on port " + port

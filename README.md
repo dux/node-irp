@@ -36,11 +36,11 @@ for poduction
 
 ## Does it work?
 
-> http://localhost:8080/fit?source=http://i.imgur.com/2dD6DL5.jpg&size=350x350
+> http://localhost:4000/fit?source=http://i.imgur.com/2dD6DL5.jpg&size=350x350
 
 you should see restaurant in a box 350px X 350px
 
-> http://localhost:8080/width?source=http://i.imgur.com/2dD6DL5.jpg&size=350
+> http://localhost:4000/width?source=http://i.imgur.com/2dD6DL5.jpg&size=350
 
 you should see restaurant resized to 350px
 
@@ -49,13 +49,13 @@ you should see restaurant resized to 350px
 
 Base64 URL cache safe paths
 
-> http://localhost:8080/fit?source=http://i.imgur.com/2dD6DL5.jpg&size=350x350
+> http://localhost:4000/fit?source=http://i.imgur.com/2dD6DL5.jpg&size=350x350
 
 can be written as
 
-> http://localhost:8080/fit/300x300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
+> http://localhost:4000/fit/300x300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
 
-> http://localhost:8080/fit/(size)/Base64(source).(jpg)
+> http://localhost:4000/fit/(size)/Base64(source).(jpg)
 
 
 ## Options
@@ -70,17 +70,26 @@ can be written as
 
 Resize resizes to defined width
 
-> http://localhost:8080/resize/300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
+> http://localhost:4000/resize/300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
 
 Fit resizes and crops image to specified with and height
 
-> http://localhost:8080/fit/200x300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
-> http://localhost:8080/fit/300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
+> http://localhost:4000/fit/200x300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
+> http://localhost:4000/fit/300/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
 
 Copy just copyes resource as any plain CDN would.
 
-> http://localhost:8080/copy/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
-> http://localhost:8080/copy?src=http://i.imgur.com/2dD6DL5.jpg
+> http://localhost:4000/copy/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
+> http://localhost:4000/copy?src=http://i.imgur.com/2dD6DL5.jpg
+
+
+## Web shots reize and capture
+
+Instead source image you can have source web page. All other methods like fit, width work as with images.
+
+> http://localhost:4000/width?page=http://trifolium.hr&size=300
+
+
 
 ## Production install nginx and forever
 

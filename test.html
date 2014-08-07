@@ -4,15 +4,15 @@
     <title>Resize tester</title>
   </head>
   <body onload="alert('Finished in '+(new Date()-window.speed)+' ms')">
-    <p>Make sure that http://localhost:8080 is up</p>
+    <p>Make sure that http://localhost:4000 is up</p>
 
     <h3>happy bannana anim gif reisize</h3>
-    <img src="http://localhost:8080/width?size=100&src=http://blogs.technet.com/cfs-file.ashx/__key/communityserver-blogs-components-weblogfiles/00-00-01-01-35/e8nZC.gif" />
-    <img src="http://localhost:8080/width?size=150&src=http://blogs.technet.com/cfs-file.ashx/__key/communityserver-blogs-components-weblogfiles/00-00-01-01-35/e8nZC.gif" />
-    <img src="http://localhost:8080/width?size=200&src=http://blogs.technet.com/cfs-file.ashx/__key/communityserver-blogs-components-weblogfiles/00-00-01-01-35/e8nZC.gif" />
+    <img src="http://localhost:4000/width?size=100&src=http://blogs.technet.com/cfs-file.ashx/__key/communityserver-blogs-components-weblogfiles/00-00-01-01-35/e8nZC.gif" />
+    <img src="http://localhost:4000/width?size=150&src=http://blogs.technet.com/cfs-file.ashx/__key/communityserver-blogs-components-weblogfiles/00-00-01-01-35/e8nZC.gif" />
+    <img src="http://localhost:4000/width?size=200&src=http://blogs.technet.com/cfs-file.ashx/__key/communityserver-blogs-components-weblogfiles/00-00-01-01-35/e8nZC.gif" />
     
     <h3>web shot amazon.com</h3>
-    <img src="http://localhost:8080/fit?size=320x200&page=http://amazon.com" />
+    <img src="http://localhost:4000/fit?size=320x200&page=http://amazon.com" />
     
     <h3>restaurant - 100 images from 100x100 to 200x200 </h3>
     <div id="restaurant"></div>
@@ -21,7 +21,7 @@
       el = document.getElementById('restaurant')
       for (var i=100;i<201;i++)
       {
-        el.innerHTML += '<img src="http://localhost:8080/fit?source=http://i.imgur.com/2dD6DL5.jpg&size='+i+'" /> '
+        el.innerHTML += '<img src="http://localhost:4000/fit?source=http://i.imgur.com/2dD6DL5.jpg&size='+i+'" /> '
       }
     </script>
   </body>
