@@ -252,7 +252,7 @@
     return new ResizeRequest(req, res, 'copy');
   });
 
-  port = process.env.NODE_PROD === "true" ? 80 : 8080;
+  port = 4000;
 
   app.listen(port);
 
