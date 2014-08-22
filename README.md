@@ -66,7 +66,7 @@ can be written as
 * `q=` 1-100 defaults to _80_ only works on jpeg, does a default 7 pass png optimisation.
 
 
-## Methods - resize, fit, copy
+## Methods - resize, fit, copy, cache
 
 Resize resizes to defined width
 
@@ -82,6 +82,11 @@ Copy just copyes resource as any plain CDN would.
 > http://localhost:4000/copy/aHR0cDovL2kuaW1ndXIuY29tLzJkRDZETDUuanBn.jpg
 > http://localhost:4000/copy?src=http://i.imgur.com/2dD6DL5.jpg
 
+
+Cache caches for x seconds. 0 is infinite
+
+> http://localhost:4000/cache-10?url=http://...
+> http://localhost:4000/cache-0?url=http://...
 
 ## Web shots reize and capture
 

@@ -14,7 +14,7 @@ fs         = require("fs")
 md5        = require("md5").digest_s
 request    = require("request")
 mkdirp     = require('mkdirp');
-webshot   = require('webshot');
+webshot    = require('webshot');
 
 # helpers
 l = (data) -> console.log(data)
@@ -49,6 +49,8 @@ class ResizeRequest
   constructor: (@req, @res, @type) ->
     opts = @req.path.split("/")
     
+    return @cached() if @type == 'cache'
+
     qs = @req.query
     if opts[2]
       qs.size = opts[2]
@@ -160,6 +162,26 @@ class ResizeRequest
     console.log "#{time_to_convert} ms for #{@image.url} to #{@image.resized_file}"
     @write_in_browser( @image.resized_file )
 
+  cached: ->
+    url = @req.query.url
+    elms = @req.path.split('/')
+    seconds = parseInt elms[1].split('-')[1]
+    seconds = 10000000 if ! seconds || seconds < 1
+
+    console.log "Cache for #{seconds} sec: #{url}"
+
+    request.get url, (a, b, c) =>
+      utc_ms = Math.round(new Date()/1000);
+      sec_time_stamp = Math.round(utc_ms/seconds)*(seconds+1)
+
+      @res.set 'Cache-control': "public, max-age=#{seconds}, no-transform"
+      @res.set 'Content-type': b.headers['content-type']
+      @res.set 'ETag': md5("#{url}-#{sec_time_stamp}")
+      
+      # @res.set 'Expires', new Date(Date.now() + seconds).toUTCString()
+      
+      return @res.send b.body
+
 
 # Create express app
 app = express()
@@ -172,6 +194,7 @@ app.get "/width*",   (req, res) -> new ResizeRequest(req, res, 'resize')
 app.get "/resize*",  (req, res) -> new ResizeRequest(req, res, 'resize')
 app.get "/fit*",     (req, res) -> new ResizeRequest(req, res, 'fit')
 app.get "/copy*",    (req, res) -> new ResizeRequest(req, res, 'copy')
+app.get "/cache*",   (req, res) -> new ResizeRequest(req, res, 'cache')
 
 # port = if process.env.NODE_PROD is "true" then 80 else 8080
 port = 4000
