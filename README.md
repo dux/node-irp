@@ -86,6 +86,7 @@ Copy just copyes resource as any plain CDN would.
 Cache caches for x seconds. 0 is infinite
 
 > http://localhost:4000/cache-10?url=http://...
+
 > http://localhost:4000/cache-0?url=http://...
 
 ## Web shots reize and capture
