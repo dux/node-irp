@@ -97,7 +97,10 @@ class ResizeRequest
     @image ||= new CacheImage(qs.source, qs.size, qs.q, @type)
 
     if @req.headers['cache-control'] == 'no-cache' && fs.existsSync( @image.resized_file )
+      console.log "Deleted: #{@image.resized_file}"
+      fs.unlinkSync( @image.cached_file )
       fs.unlinkSync( @image.resized_file )
+      # return @res.send 200, 'Unlinked'
 
     if @type != 'copy' && fs.existsSync( @image.resized_file )
       return @deliver_resized_image()
