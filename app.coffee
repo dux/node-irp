@@ -13,11 +13,18 @@ easy_image = require("easyimage")
 fs         = require("fs")
 md5        = require("md5").digest_s
 request    = require("request")
-mkdirp     = require('mkdirp');
+# mkdirp     = require('mkdirp');
 webshot    = require('webshot');
 
 # helpers
 l = (data) -> console.log(data)
+
+mkdirp = (path) ->
+  return if fs.existsSync( path )  
+  base = []
+  for el in path.split('/')
+    base.push el
+    fs.mkdirSync base.join('/') unless fs.existsSync( base.join('/') )  
 
 class CacheImage
   @content_type = 
@@ -64,8 +71,8 @@ class ResizeRequest
       qs.source = qs.page
 
     # we have all params?
-    return res.send( 500, "<h3>Source not defined</h3>" ) unless qs.source
-    return res.send( 500, "<h3>BAD URL</h3><p>No http or https prefix on <b>#{qs.source}</b></p>" ) unless /https?:\/\//.test(qs.source)
+    return @res.send( 500, "<h3>Source not defined</h3>" ) unless qs.source
+    return @res.send( 500, "<h3>BAD URL</h3><p>No http or https prefix on <b>#{qs.source}</b></p>" ) unless /https?:\/\//.test(qs.source)
 
     qs.q ||= 80
 
@@ -104,6 +111,7 @@ class ResizeRequest
             if resp.statusCode is 200
               mkdirp( @image.cached_dir )
               req.pipe fs.createWriteStream( @image.cached_file )
+              # return @req.send 200, @image.cached_file
             else
               console.log "Error: Code: " + resp.statusCode
               console.log "Invalid File"
