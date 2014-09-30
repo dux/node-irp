@@ -1,4 +1,5 @@
 # https://github.com/dawanda/node-imageable-server
+
 # https://github.com/sdepold/node-imageable
 # https://github.com/chrisjenx/NodeSizer
 
@@ -8,16 +9,33 @@
 # generate web shoot thumbnail
 # http://localhost:8080/fit?page=http://www.trab.io&size=400x300
 
+#fit
+#convert v.jpg -resize 200x200^ -gravity center -background black -extent 200x200 v_fit.jpg
+
+#resize
+#convert v.jpg -resize 200x1000 v_resize.jpg
+
 express    = require("express")
-easy_image = require("easyimage")
+# easy_image = require("easyimage")
 fs         = require("fs")
 md5        = require("md5").digest_s
 request    = require("request")
 # mkdirp     = require('mkdirp');
 webshot    = require('webshot');
+exec       = require('child_process').exec;
 
 # helpers
 l = (data) -> console.log(data)
+
+easy_image_rescrop = (opts, func) ->
+  doit = "convert #{opts['src']} -quality #{opts['quality']} -resize #{opts['width']}x#{opts['height']}^ -gravity center -background black -extent #{opts['width']}x#{opts['height']} #{opts['dst']}"
+  console.log "CropFit: #{doit}"
+  exec doit, func
+
+easy_image_resize = (opts, func) ->
+  doit = "convert #{opts['src']} -quality #{opts['quality']} -resize #{opts['width']}x2000 #{opts['dst']}"
+  console.log "Resize: #{doit}"
+  exec doit, func
 
 mkdirp = (path) ->
   return if fs.existsSync( path )  
@@ -64,6 +82,7 @@ class ResizeRequest
       qs.source = new Buffer(opts.reverse()[0].split(".")[0], encoding = "Base64").toString("ascii")
     else
       qs.source ||= qs.src || qs.image
+      qs.size = qs.width if qs.width
 
     # for webshot
     if qs.page
@@ -108,9 +127,12 @@ class ResizeRequest
       if fs.existsSync( @image.cached_file )
         return @when_we_have_original_image()
       else
+        console.log "Download start: #{qs.source}"
         try
           req = request(url: qs.source)
           req.on "response", (resp) =>
+            console.log "Download END: #{qs.source} in #{Date.now() - @image.start}ms"
+
             if resp.statusCode is 200
               mkdirp( @image.cached_dir )
               req.pipe fs.createWriteStream( @image.cached_file )
@@ -132,7 +154,7 @@ class ResizeRequest
     fs.createReadStream( local_path ).pipe( @res )
 
   when_we_have_original_image: ->
-    return @deliver_resized_image() if fs.existsSync( @image.resized_file )
+    # return @deliver_resized_image() if fs.existsSync( @image.resized_file ) 
     return @write_in_browser( @image.cached_file ) if @type == 'copy'
 
     mkdirp @image.resized_dir
@@ -154,7 +176,9 @@ class ResizeRequest
     if @type == 'fit'
       opts.height ||= opts.width
       opts.gravity = @req.query.gravity
-      easy_image.rescrop opts, (err, img) =>
+      console.log opts
+      # easy_image.rescrop opts, (err, img) =>
+      easy_image_rescrop opts, (err, img) =>
         if err
           if @image.is_page
             fs.unlinkSync @image.cached_file if fs.existsSync @image.cached_file
@@ -162,7 +186,7 @@ class ResizeRequest
           return @res.send 500, "ERROR: #{err}"
         @deliver_resized_image()
     else
-      easy_image.resize opts, (err, img) =>
+      easy_image_resize opts, (err, img) =>
         return @res.send 500, "ERROR: #{err}" if err
         @deliver_resized_image()
 
