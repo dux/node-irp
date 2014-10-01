@@ -28,12 +28,12 @@ exec       = require('child_process').exec;
 l = (data) -> console.log(data)
 
 easy_image_rescrop = (opts, func) ->
-  doit = "convert #{opts['src']} -quality #{opts['quality']} -resize #{opts['width']}x#{opts['height']}^ -gravity center -background black -extent #{opts['width']}x#{opts['height']} #{opts['dst']}"
+  doit = "convert #{opts.src} -quality #{opts.quality} -resize #{opts.width}x#{opts.height}^ -gravity #{opts.gravity} -background black -extent #{opts.width}x#{opts.height} #{opts.dst}"
   console.log doit
   exec doit, func
 
 easy_image_resize = (opts, func) ->
-  doit = "convert #{opts['src']} -quality #{opts['quality']} -resize #{opts['width']}x2000 #{opts['dst']}"
+  doit = "convert #{opts['src']} -quality #{opts.quality} -resize #{opts.width}x2000 #{opts.dst}"
   console.log doit
   exec doit, func
 
@@ -52,7 +52,7 @@ class CacheImage
     png: 'image/png'
     js: 'text/javascript'
 
-  constructor: (@url, @size, @quality, @type) ->
+  constructor: (@url, @size, @quality, @type, @gravity) ->
     path = @url.toLowerCase().split('/')
     path.shift()
     path.shift()
@@ -61,12 +61,12 @@ class CacheImage
     @file_name = path.join('/').replace(/[^\w\.]+/g, "_")
 
     @ext = @file_name.split('.').reverse()[0]
-    @file_name = "#{md5(@file_name)}.#{@ext}"
+    @file_name = 
 
     @cached_dir   = "cache/ori/#{@domain}/#{@file_name.substring(0, 2)}"
-    @cached_file  = "#{@cached_dir}/#{@file_name}"
+    @cached_file  = "#{@cached_dir}/#{md5(@file_name)}.#{@ext}"
     @resized_dir  = "cache/res/#{@domain}/#{@type}/#{@size}-#{@quality}/#{@file_name.substring(0, 2)}"
-    @resized_file = "#{@resized_dir}/#{@file_name}"
+    @resized_file = "#{@resized_dir}/#{md5(@file_name+@gravity)}.#{@ext}"
 
     @start = Date.now()
 
@@ -98,7 +98,7 @@ class ResizeRequest
 
     if qs.is_page
       @req.query.gravity = 'North'
-      @image ||= new CacheImage(qs.source+'/shot.jpg', qs.size, qs.q, @type)
+      @image ||= new CacheImage(qs.source+'/shot.jpg', qs.size, qs.q, @type, @req.query.gravity)
       @image.is_page = true
       return @when_we_have_original_image() if fs.existsSync( @image.cached_file )
       mkdirp @image.cached_dir
@@ -114,7 +114,7 @@ class ResizeRequest
         return @when_we_have_original_image()
       return
 
-    @image ||= new CacheImage(qs.source, qs.size, qs.q, @type)
+    @image ||= new CacheImage(qs.source, qs.size, qs.q, @type, @req.query.gravity)
 
     if @req.headers['cache-control'] == 'no-cache' && fs.existsSync( @image.resized_file )
       console.log "Deleted: #{@image.resized_file}"
@@ -169,7 +169,7 @@ class ResizeRequest
 
     if @type == 'fit'
       opts.height ||= opts.width
-      opts.gravity = @req.query.gravity
+      opts.gravity = @req.query.gravity || 'center'
       # easy_image.rescrop opts, (err, img) =>
       easy_image_rescrop opts, (err, img) =>
         if err
