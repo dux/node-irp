@@ -128,23 +128,24 @@ class ResizeRequest
         return @when_we_have_original_image()
       else
         console.log "Download start: #{qs.source}"
-        try
-          req = request(url: qs.source)
-          req.on "response", (resp) =>
-            console.log "Download END: #{qs.source} in #{Date.now() - @image.start}ms"
+        mkdirp @image.cached_dir
+        exec "curl '#{qs.source}' -o #{@image.cached_file}", => 
+          @when_we_have_original_image()
+          # req = request(url: qs.source)
+          # req.on "response", (resp) =>
+          #   console.log "Download END: #{qs.source} in #{Date.now() - @image.start}ms"
+          #   if resp.statusCode is 200
+          #     mkdirp( @image.cached_dir )
+          #     req.pipe fs.createWriteStream( @image.cached_file )
+          #     # return @req.send 200, @image.cached_file
+          #   else
+          #     console.log "Error: Code: " + resp.statusCode
+          #     console.log "Invalid File"
 
-            if resp.statusCode is 200
-              mkdirp( @image.cached_dir )
-              req.pipe fs.createWriteStream( @image.cached_file )
-              # return @req.send 200, @image.cached_file
-            else
-              console.log "Error: Code: " + resp.statusCode
-              console.log "Invalid File"
-
-          req.on "end", => @when_we_have_original_image()
-        catch err
-          @res.send 500, {}, "Error: #{err}, probably bad URL (#{qs.source})"
-          return
+          # req.on "end", => @when_we_have_original_image()
+        # catch err
+        #   @res.send 500, {}, "Error: #{err}, probably bad URL (#{qs.source})"
+        #   return
 
   write_in_browser: (local_path) ->
     @res.set 'Content-Type': CacheImage.content_type[@image.ext] if CacheImage.content_type[@image.ext]
@@ -176,7 +177,6 @@ class ResizeRequest
     if @type == 'fit'
       opts.height ||= opts.width
       opts.gravity = @req.query.gravity
-      console.log opts
       # easy_image.rescrop opts, (err, img) =>
       easy_image_rescrop opts, (err, img) =>
         if err
