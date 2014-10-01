@@ -44,6 +44,13 @@ mkdirp = (path) ->
     base.push el
     fs.mkdirSync base.join('/') unless fs.existsSync( base.join('/') )  
 
+safe_do = (func) ->
+  try
+    func()
+  catch err
+    @res.send 500, {}, "Error: #{err}"
+
+
 class CacheImage
   @content_type = 
     jpg: 'image/jpeg'
@@ -217,11 +224,11 @@ app.get "/", (req, res) -> res.send "<p>hakeru!!!<p>"
 app.get '/favicon.ico', (req, res) -> res.send('')
 
 # Converter
-app.get "/width*",   (req, res) -> new ResizeRequest(req, res, 'resize')
-app.get "/resize*",  (req, res) -> new ResizeRequest(req, res, 'resize')
-app.get "/fit*",     (req, res) -> new ResizeRequest(req, res, 'fit')
-app.get "/copy*",    (req, res) -> new ResizeRequest(req, res, 'copy')
-app.get "/cache*",   (req, res) -> new ResizeRequest(req, res, 'cache')
+app.get "/width*",   (req, res) -> safe_do -> new ResizeRequest(req, res, 'resize')
+app.get "/resize*",  (req, res) -> safe_do -> new ResizeRequest(req, res, 'resize')
+app.get "/fit*",     (req, res) -> safe_do -> new ResizeRequest(req, res, 'fit')
+app.get "/copy*",    (req, res) -> safe_do -> new ResizeRequest(req, res, 'copy')
+app.get "/cache*",   (req, res) -> safe_do -> new ResizeRequest(req, res, 'cache')
 
 # port = if process.env.NODE_PROD is "true" then 80 else 8080
 port = 4000
