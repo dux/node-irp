@@ -61,7 +61,6 @@ class CacheImage
     @file_name = path.join('/').replace(/[^\w\.]+/g, "_")
 
     @ext = @file_name.split('.').reverse()[0]
-    @file_name = 
 
     @cached_dir   = "cache/ori/#{@domain}/#{@file_name.substring(0, 2)}"
     @cached_file  = "#{@cached_dir}/#{md5(@file_name)}.#{@ext}"
