@@ -29,12 +29,12 @@ l = (data) -> console.log(data)
 
 easy_image_rescrop = (opts, func) ->
   doit = "convert #{opts['src']} -quality #{opts['quality']} -resize #{opts['width']}x#{opts['height']}^ -gravity center -background black -extent #{opts['width']}x#{opts['height']} #{opts['dst']}"
-  console.log "CropFit: #{doit}"
+  console.log doit
   exec doit, func
 
 easy_image_resize = (opts, func) ->
   doit = "convert #{opts['src']} -quality #{opts['quality']} -resize #{opts['width']}x2000 #{opts['dst']}"
-  console.log "Resize: #{doit}"
+  console.log doit
   exec doit, func
 
 mkdirp = (path) ->
@@ -63,10 +63,11 @@ class CacheImage
     @ext = @file_name.split('.').reverse()[0]
     @file_name = "#{md5(@file_name)}.#{@ext}"
 
-    @cached_dir   = "cache/ori/#{@domain}"
+    @cached_dir   = "cache/ori/#{@domain}/#{@file_name.substring(0, 2)}"
     @cached_file  = "#{@cached_dir}/#{@file_name}"
-    @resized_dir  = "cache/res/#{@domain}/#{@type}/#{@size}-#{@quality}"
+    @resized_dir  = "cache/res/#{@domain}/#{@type}/#{@size}-#{@quality}/#{@file_name.substring(0, 2)}"
     @resized_file = "#{@resized_dir}/#{@file_name}"
+
     @start = Date.now()
 
 
@@ -128,31 +129,23 @@ class ResizeRequest
         return @when_we_have_original_image()
       else
         console.log "Download start: #{qs.source}"
-        mkdirp @image.cached_dir
-        exec "curl '#{qs.source}' -o #{@image.cached_file}", => 
-          @when_we_have_original_image()
-          # req = request(url: qs.source)
-          # req.on "response", (resp) =>
-          #   console.log "Download END: #{qs.source} in #{Date.now() - @image.start}ms"
-          #   if resp.statusCode is 200
-          #     mkdirp( @image.cached_dir )
-          #     req.pipe fs.createWriteStream( @image.cached_file )
-          #     # return @req.send 200, @image.cached_file
-          #   else
-          #     console.log "Error: Code: " + resp.statusCode
-          #     console.log "Invalid File"
-
-          # req.on "end", => @when_we_have_original_image()
-        # catch err
-        #   @res.send 500, {}, "Error: #{err}, probably bad URL (#{qs.source})"
-        #   return
+        try
+          mkdirp @image.cached_dir
+          exec "curl '#{qs.source}' -o #{@image.cached_file}", => 
+            @when_we_have_original_image()
+        catch err
+          @res.send 500, {}, "Error: #{err}, probably bad URL (#{qs.source})"
+          return
 
   write_in_browser: (local_path) ->
     @res.set 'Content-Type': CacheImage.content_type[@image.ext] if CacheImage.content_type[@image.ext]
     @res.set 'Cache-control': "public, max-age=10000000, no-transform"
     @res.set 'ETag': md5( local_path )
     @res.set 'Expires', new Date(Date.now() + 10000000).toUTCString()
-    fs.createReadStream( local_path ).pipe( @res )
+    try
+      fs.createReadStream( local_path ).pipe( @res )
+    catch err
+      @res.send 500, {}, "Error: #{err}, probably img not on disk (#{local_path})"
 
   when_we_have_original_image: ->
     # return @deliver_resized_image() if fs.existsSync( @image.resized_file ) 
